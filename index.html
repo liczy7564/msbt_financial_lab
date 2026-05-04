@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>記帳系統</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<style>
+  :root {
+    --bg: #f5f0eb;
+    --bg2: #ede8e2;
+    --card: #faf8f5;
+    --border: #ddd8d0;
+    --text: #4a3f35;
+    --text-sub: #8a7f75;
+    --accent: #9b8b7a;
+    --accent2: #c4b5a5;
+    --green: #7aad8b;
+    --red: #c47a7a;
+    --shadow: 0 2px 8px rgba(100,80,60,0.08);
+    --radius: 12px;
+    --font: 'Georgia', serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+  }
+
+  /* ======== 密碼頁 ======== */
+  #page-login {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  .login-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 40px;
+    width: 340px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .login-logo { font-size: 36px; }
+  .login-title { font-size: 20px; font-weight: normal; letter-spacing: 2px; }
+  .login-subtitle { font-size: 12px; color: var(--text-sub); letter-spacing: 1px; }
+
+  .login-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 18px;
+    letter-spacing: 6px;
+    text-align: center;
+    outline: none;
+    font-family: monospace;
+    transition: border-color 0.2s;
+  }
+  .login-input:focus { border-color: var(--accent); }
+
+  .btn-login {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: background 0.2s;
+  }
+  .btn-login:hover { background: var(--text); }
+
+  .login-error { color: var(--red); font-size: 13px; display: none; letter-spacing: 1px; }
+
+  /* ======== 主頁面 ======== */
+  #page-main { display: none; }
+
+  .topbar {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-title { font-size: 18px; letter-spacing: 3px; }
+  .topbar-logo { font-size: 22px; margin-right: 8px; }
+
+  .btn-logout {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    color: var(--text-sub);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-logout:hover { background: var(--bg2); color: var(--text); }
+
+  /* ======== 內容區 ======== */
+  .content {
+    padding: 16px 24px 60px;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  .content-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .content-title {
+    font-size: 13px;
+    color: var(--text-sub);
+    letter-spacing: 2px;
+  }
+
+  /* ======== 新增按鈕 ======== */
+  .btn-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 14px;
+    background: var(--card);
+    border: 1.5px dashed var(--accent2);
+    border-radius: 9px;
+    color: var(--accent);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+  .btn-add:hover { background: var(--bg2); border-color: var(--accent); }
+
+  /* ======== 主項目 ======== */
+  .main-block {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: box-shadow 0.15s;
+  }
+  .main-block:hover { box-shadow: var(--shadow); }
+
+  .main-header {
+    display: flex;
+    align-items: center;
+    padding: 15px 18px;
+    cursor: pointer;
+    gap: 10px;
+    user-select: none;
+  }
+
+  .main-toggle {
+    font-size: 12px;
+    color: var(--accent2);
+    width: 16px;
+    text-align: center;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .main-block.open .main-toggle { transform: rotate(90deg); }
+
+  .main-name {
+    font-size: 16px;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .main-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  /* ======== 次項目 ======== */
+  .sub-list {
+    display: none;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    padding: 10px 12px 12px 12px;
+  }
+
+  .sub-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px 10px 8px;
+  }
+
+  .sub-label { font-size: 11px; color: var(--text-sub); letter-spacing: 1.5px; }
+
+  .sub-block {
+    background: #ebe2df;
+    border: 1px solid #c3b1b1;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+
+  .sub-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    gap: 10px;
+    user-select: none;
+  }
+
+  .sub-toggle {
+    font-size: 11px;
+    color: var(--accent2);
+    width: 14px;
+    text-align: center;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .sub-block.open .sub-toggle { transform: rotate(90deg); }
+
+  .sub-name {
+    font-size: 14px;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .sub-desc {
+    font-size: 11px;
+    color: var(--text-sub);
+    margin-top: 2px;
+  }
+
+  .sub-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  /* ======== 記帳項 ======== */
+  .ledger-list {
+    display: none;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    padding: 8px 10px 10px 10px;
+  }
+
+  .ledger-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 6px 8px 6px;
+  }
+
+  .ledger-label { font-size: 11px; color: var(--text-sub); letter-spacing: 1px; }
+
+  .ledger-row {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .ledger-info { flex: 1; min-width: 0; }
+  .ledger-item { font-size: 14px; color: var(--text); }
+  .ledger-meta { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+
+  .ledger-amount {
+    font-size: 15px;
+    font-family: monospace;
+    flex-shrink: 0;
+    min-width: 70px;
+    text-align: right;
+  }
+  .ledger-amount.negative { color: var(--red); }
+  .ledger-amount.positive { color: var(--green); }
+
+  .empty-msg {
+    text-align: center;
+    color: var(--text-sub);
+    font-size: 12px;
+    padding: 16px;
+    letter-spacing: 1px;
+  }
+
+  /* ======== 共用元件 ======== */
+  .item-count {
+    background: var(--bg2);
+    color: var(--text-sub);
+    border-radius: 20px;
+    padding: 2px 9px;
+    font-size: 11px;
+    min-width: 28px;
+    text-align: center;
+    font-family: monospace;
+  }
+
+  /* 選中狀態 */
+  .main-block.selected > .main-header,
+  .sub-block.selected > .sub-header,
+  .ledger-row.selected {
+    background: #ede8e0;
+    border-radius: 0;
+  }
+  .main-block.selected { border-color: var(--accent2); }
+  .sub-block.selected { border-color: var(--accent2); }
+  .ledger-row.selected { border-color: var(--accent2); }
+
+  /* ======== 底部 Action Bar ======== */
+  #action-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    z-index: 150;
+    gap: 12px;
+  }
+  #action-bar.show { display: flex; }
+
+  #action-bar-label {
+    font-size: 13px;
+    color: var(--text-sub);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .action-bar-btns { display: flex; gap: 10px; flex-shrink: 0; }
+
+  .btn-action-edit {
+    padding: 9px 22px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    font-size: 13px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background 0.15s;
+  }
+  .btn-action-edit:hover { background: var(--text); }
+
+  .btn-action-del {
+    padding: 9px 22px;
+    background: none;
+    color: var(--red);
+    border: 1.5px solid #f0c0c0;
+    border-radius: 9px;
+    font-size: 13px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.15s;
+  }
+  .btn-action-del:hover { background: #fce8e8; }
+
+  /* content 底部留空間給 action bar */
+  .content { padding-bottom: 80px; }
+
+  /* ======== 載入中 ======== */
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 56px;
+    color: var(--text-sub);
+    font-size: 14px;
+    gap: 10px;
+  }
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ======== Modal ======== */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(80,60,40,0.22);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.active { display: flex; }
+
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 28px;
+    width: 440px;
+    max-width: 95vw;
+    box-shadow: 0 8px 32px rgba(80,60,40,0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .modal-title { font-size: 17px; letter-spacing: 2px; }
+
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-label { font-size: 12px; color: var(--text-sub); letter-spacing: 1px; }
+
+  .form-input {
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: var(--font);
+    width: 100%;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .form-input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .modal-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+
+  .btn-cancel {
+    padding: 9px 20px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    color: var(--text-sub);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-cancel:hover { background: var(--bg2); }
+
+  .btn-confirm {
+    padding: 9px 24px;
+    background: var(--accent);
+    border: none;
+    border-radius: 9px;
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background 0.15s;
+  }
+  .btn-confirm:hover { background: var(--text); }
+  .btn-confirm.danger { background: var(--red); }
+  .btn-confirm.danger:hover { background: #a05050; }
+
+  .confirm-text { font-size: 14px; line-height: 1.7; }
+
+  /* ======== Toast ======== */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--text);
+    color: #fff;
+    padding: 9px 22px;
+    border-radius: 20px;
+    font-size: 13px;
+    letter-spacing: 1px;
+    z-index: 999;
+    transition: transform 0.3s ease;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- ==================== 密碼頁 ==================== -->
+<div id="page-login">
+  <div class="login-box">
+    <div class="login-logo">🧮</div>
+    <div class="login-title">記帳系統</div>
+    <div class="login-subtitle">請輸入六位數密碼</div>
+    <input type="password" class="login-input" id="pwd-input" maxlength="6" placeholder="● ● ● ● ● ●" autocomplete="off">
+    <button class="btn-login" id="btn-login">確認登入</button>
+    <div class="login-error" id="login-error">密碼錯誤，請再試一次</div>
+  </div>
+</div>
+
+<!-- ==================== 主頁面 ==================== -->
+<div id="page-main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;">
+      <span class="topbar-logo">🧮</span>
+      <span class="topbar-title">記帳系統</span>
+    </div>
+    <button class="btn-logout" id="btn-logout">登出</button>
+  </div>
+  <div class="content" id="main-content">
+    <div class="loading"><div class="spinner"></div> 載入中...</div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal-box"></div>
+</div>
+
+<!-- Bottom Action Bar -->
+<div id="action-bar">
+  <span id="action-bar-label"></span>
+  <div class="action-bar-btns">
+    <button class="btn-action-edit" id="btn-action-edit">✏️ 修改</button>
+    <button class="btn-action-del" id="btn-action-del">🗑 刪除</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ==========================================
+//   請將下方網址替換為你的 Apps Script 部署網址
+// ==========================================
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzkLGNPhknIbvgYP4_uPPaho3Z130JsY48ZnktUs60TPTsyI9N75RGC_op36R0sM5Ijpw/exec';
+
+let sheet1Data = [];
+let sheet2Data = [];
+
+// ======== API ========
+function callAPI(params) {
+  return $.ajax({ url: APPS_SCRIPT_URL, method: 'GET', data: params, dataType: 'json' });
+}
+
+// ======== Toast ========
+function showToast(msg) {
+  const $t = $('#toast');
+  $t.text(msg).addClass('show');
+  setTimeout(() => $t.removeClass('show'), 2000);
+}
+
+function esc(str) { return $('<div>').text(str || '').html(); }
+function today() { return new Date().toISOString().split('T')[0]; }
+
+// ======== 登入 ========
+$(document).ready(function () {
+  $('#btn-login').on('click', doLogin);
+  $('#pwd-input').on('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+  $('#btn-logout').on('click', function(){
+    $('#page-main').hide();
+    $('#page-login').show();
+    $('#pwd-input').val('');
+    $('#login-error').hide();
+  });
+});
+
+function doLogin() {
+  const pwd = $('#pwd-input').val().trim();
+  if (!pwd) return;
+  $('#btn-login').text('驗證中...').prop('disabled', true);
+  callAPI({ action: 'verifyPassword', password: pwd })
+    .done(function(res) {
+      if (res.match) {
+        $('#page-login').hide();
+        $('#page-main').show();
+        loadAllData();
+      } else {
+        $('#login-error').show();
+        $('#pwd-input').val('').focus();
+      }
+    })
+    .fail(function() { $('#login-error').text('連線失敗，請稍後再試').show(); })
+    .always(function() { $('#btn-login').text('確認登入').prop('disabled', false); });
+}
+
+// ======== 載入資料 ========
+function loadAllData() {
+  $('#main-content').html('<div class="loading"><div class="spinner"></div> 載入資料中...</div>');
+  $.when(
+    callAPI({ action: 'getSheet1' }),
+    callAPI({ action: 'getSheet2' })
+  ).done(function(r1, r2) {
+    sheet1Data = r1[0].data || [];
+    sheet2Data = r2[0].data || [];
+    renderAll({});
+  }).fail(function() {
+    $('#main-content').html('<div style="text-align:center;padding:48px;color:var(--text-sub)">資料載入失敗，請重新整理</div>');
+  });
+}
+
+// ======== 取不重複主項目 ========
+function getMainCategories() {
+  const seen = new Set();
+  return sheet1Data.map(r => r.mainCategory).filter(m => m && !seen.has(m) && seen.add(m));
+}
+
+// ======== 取某主項目下的次項目（不重複 subject）========
+function getSubsOfMain(main) {
+  const seen = new Set();
+  return sheet1Data.filter(r => r.mainCategory === main && r.subject && !seen.has(r.subject) && seen.add(r.subject));
+}
+
+// ======== 記錄目前展開狀態 ========
+function getOpenState() {
+  const state = { mains: {}, subs: {} };
+  $('.main-block').each(function() {
+    if ($(this).hasClass('open')) state.mains[$(this).data('main')] = true;
+  });
+  $('.sub-block').each(function() {
+    if ($(this).hasClass('open')) state.subs[$(this).data('subkey')] = true;
+  });
+  return state;
+}
+
+// ======== 渲染全部 ========
+function renderAll(openState) {
+  const mains = getMainCategories();
+
+  let html = '<div class="content-header">';
+  html += '<span class="content-title">主項目</span>';
+  html += '<button class="btn-add" id="btn-add-main">＋ 新增主項目</button>';
+  html += '</div>';
+
+  if (mains.length === 0) {
+    html += '<div class="empty-msg">尚無資料</div>';
+  } else {
+    mains.forEach(main => {
+      const subs = getSubsOfMain(main);
+      const isOpen = !!(openState && openState.mains && openState.mains[main]);
+      html += buildMainBlock(main, subs, isOpen, openState);
+    });
+  }
+
+  $('#main-content').html(html);
+  bindEvents();
+}
+
+function buildMainBlock(main, subs, isOpen, openState) {
+  let html = `<div class="main-block${isOpen ? ' open' : ''}" data-main="${esc(main)}" data-type="main">
+    <div class="main-header">
+      <span class="main-toggle">›</span>
+      <span class="main-name">${esc(main)}</span>
+      <span class="item-count" style="margin-left:auto;margin-right:10px;">${subs.length}</span>
+    </div>
+    <div class="sub-list"${isOpen ? ' style="display:block"' : ''}>
+      <div class="sub-list-header">
+        <span class="sub-label">次項目</span>
+        <button class="btn-add btn-add-sub" data-main="${esc(main)}">＋ 新增次項目</button>
+      </div>`;
+
+  if (subs.length === 0) {
+    html += '<div class="empty-msg">尚無次項目</div>';
+  } else {
+    subs.forEach(sub => {
+      const subKey = main + '||' + sub.subject;
+      const ledgerItems = sheet2Data.filter(r => r.mainCategory === main && r.subject === sub.subject);
+      const subOpen = !!(openState && openState.subs && openState.subs[subKey]);
+      html += buildSubBlock(main, sub, ledgerItems, subOpen);
+    });
+  }
+
+  html += `</div></div>`;
+  return html;
+}
+
+function buildSubBlock(main, sub, ledgerItems, isOpen) {
+  const subKey = main + '||' + sub.subject;
+  let html = `<div class="sub-block${isOpen ? ' open' : ''}" data-subkey="${esc(subKey)}" data-subcode="${esc(sub.subCode)}" data-type="sub" data-main="${esc(main)}">
+    <div class="sub-header">
+      <span class="sub-toggle">›</span>
+      <div style="flex:1;min-width:0;">
+        <div class="sub-name">${esc(sub.subject)}</div>
+        ${sub.description ? `<div class="sub-desc">${esc(sub.description)}</div>` : ''}
+      </div>
+      <span class="item-count" style="margin-left:auto;margin-right:10px;">${ledgerItems.length}</span>
+    </div>
+    <div class="ledger-list"${isOpen ? ' style="display:block"' : ''}>
+      <div class="ledger-list-header">
+        <span class="ledger-label">記帳項</span>
+        <button class="btn-add btn-add-ledger" data-main="${esc(main)}" data-subject="${esc(sub.subject)}">＋ 新增記帳項</button>
+      </div>`;
+
+  if (ledgerItems.length === 0) {
+    html += '<div class="empty-msg">尚無記帳項</div>';
+  } else {
+    ledgerItems.forEach(item => {
+      const amt = parseFloat(item.amount);
+      const amtClass = isNaN(amt) ? '' : (amt < 0 ? 'negative' : 'positive');
+      const amtStr = isNaN(amt) ? (item.amount || '-') : amt.toLocaleString();
+      html += `<div class="ledger-row" data-type="ledger" data-row="${item.rowIndex}" data-item="${esc(item.item)}">
+        <div class="ledger-info">
+          <div class="ledger-item">${esc(item.item)}</div>
+          <div class="ledger-meta">${esc(item.date || '')}${item.note ? ' ・ ' + esc(item.note) : ''}</div>
+        </div>
+        <div class="ledger-amount ${amtClass}">${amtStr}</div>
+      </div>`;
+    });
+  }
+
+  html += `</div></div>`;
+  return html;
+}
+
+// ======== 選取狀態 ========
+let selected = null; // { type, data }
+
+function clearSelected() {
+  selected = null;
+  $('.main-block, .sub-block, .ledger-row').removeClass('selected');
+  $('#action-bar').removeClass('show');
+}
+
+function setSelected(type, data, label) {
+  clearSelected();
+  selected = { type, data };
+  $('#action-bar-label').text(label);
+  $('#action-bar').addClass('show');
+}
+
+// ======== 綁定事件 ========
+function bindEvents() {
+
+  // 主項目 toggle + 選取
+  $(document).off('click.main').on('click.main', '.main-header', function(e) {
+    const $block = $(this).closest('.main-block');
+    // 若已選取此項目，取消
+    if ($block.hasClass('selected')) {
+      clearSelected();
+      return;
+    }
+    clearSelected();
+    const main = $block.data('main');
+    $block.addClass('selected');
+    setSelected('main', { main }, main);
+    // toggle
+    $block.toggleClass('open');
+    $block.find('> .sub-list').slideToggle(180);
+  });
+
+  // 次項目 toggle + 選取
+  $(document).off('click.sub').on('click.sub', '.sub-header', function(e) {
+    const $block = $(this).closest('.sub-block');
+    if ($block.hasClass('selected')) {
+      clearSelected();
+      return;
+    }
+    clearSelected();
+    const subCode = $block.data('subcode');
+    const sub = sheet1Data.find(r => r.subCode == subCode);
+    if (sub) {
+      $block.addClass('selected');
+      setSelected('sub', { sub }, sub.subject);
+    }
+    $block.toggleClass('open');
+    $block.find('> .ledger-list').slideToggle(160);
+  });
+
+  // 記帳項 選取
+  $(document).off('click.ledger').on('click.ledger', '.ledger-row', function(e) {
+    const $row = $(this);
+    if ($row.hasClass('selected')) {
+      clearSelected();
+      return;
+    }
+    clearSelected();
+    const rowIndex = $row.data('row');
+    const item = sheet2Data.find(r => r.rowIndex === rowIndex);
+    if (item) {
+      $row.addClass('selected');
+      setSelected('ledger', { item }, item.item);
+    }
+  });
+
+  // 點擊空白處取消選取
+  $(document).off('click.deselect').on('click.deselect', function(e) {
+    if (!$(e.target).closest('.main-header,.sub-header,.ledger-row,#action-bar,.modal-overlay').length) {
+      clearSelected();
+    }
+  });
+
+  // Action bar 修改
+  $('#btn-action-edit').off('click').on('click', function() {
+    if (!selected) return;
+    if (selected.type === 'main') showEditMainModal(selected.data.main);
+    else if (selected.type === 'sub') showEditSubModal(selected.data.sub);
+    else if (selected.type === 'ledger') showEditLedgerModal(selected.data.item);
+  });
+
+  // Action bar 刪除
+  $('#btn-action-del').off('click').on('click', function() {
+    if (!selected) return;
+    if (selected.type === 'main') showDeleteMainModal(selected.data.main);
+    else if (selected.type === 'sub') showDeleteSubModal(selected.data.sub);
+    else if (selected.type === 'ledger') showDeleteLedgerModal(selected.data.item.rowIndex, selected.data.item.item);
+  });
+
+  // 新增主項目
+  $(document).off('click.addmain', '#btn-add-main').on('click.addmain', '#btn-add-main', function(e) {
+    e.stopPropagation();
+    clearSelected();
+    showAddMainModal();
+  });
+
+  // 新增次項目
+  $(document).off('click.addsub', '.btn-add-sub').on('click.addsub', '.btn-add-sub', function(e) {
+    e.stopPropagation();
+    clearSelected();
+    showAddSubModal($(this).data('main'));
+  });
+
+  // 新增記帳項
+  $(document).off('click.addledger', '.btn-add-ledger').on('click.addledger', '.btn-add-ledger', function(e) {
+    e.stopPropagation();
+    clearSelected();
+    showAddLedgerModal($(this).data('main'), $(this).data('subject'));
+  });
+}
+
+// ======== Modal 工具 ========
+function openModal(html) {
+  $('#modal-box').html(html);
+  $('#modal-overlay').addClass('active');
+}
+function closeModal() { $('#modal-overlay').removeClass('active'); }
+$(document).on('click', '#modal-overlay', function(e) {
+  if ($(e.target).is('#modal-overlay')) closeModal();
+});
+
+// ======== 重新載入（保留展開狀態）========
+function reload() {
+  const state = getOpenState();
+  clearSelected();
+  $.when(
+    callAPI({ action: 'getSheet1' }),
+    callAPI({ action: 'getSheet2' })
+  ).done(function(r1, r2) {
+    sheet1Data = r1[0].data || [];
+    sheet2Data = r2[0].data || [];
+    renderAll(state);
+  });
+}
+
+// ======== 主項目 CRUD ========
+function showAddMainModal() {
+  openModal(`
+    <div class="modal-title">新增主項目</div>
+    <div class="form-group">
+      <label class="form-label">主項目名稱</label>
+      <input class="form-input" id="f-main" placeholder="例：02 費用" />
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-confirm" id="btn-do-add-main">確認新增</button>
+    </div>
+  `);
+  $('#btn-do-add-main').on('click', function() {
+    const val = $('#f-main').val().trim();
+    if (!val) return;
+    $(this).text('儲存中...').prop('disabled', true);
+    callAPI({ action:'addSheet1Row', data: JSON.stringify({
+      mainCategory: val, subOrder:'',
+      subCode: val.replace(/\s/g,'') + '_ph',
+      subName:'', subject: val + '（待新增次項目）', description:''
+    })}).done(function() { closeModal(); showToast('新增成功'); reload(); });
+  });
+}
+
+function showEditMainModal(main) {
+  openModal(`
+    <div class="modal-title">編輯主項目</div>
+    <div class="form-group">
+      <label class="form-label">主項目名稱</label>
+      <input class="form-input" id="f-main" value="${esc(main)}" />
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-confirm" id="btn-do-edit-main">確認修改</button>
+    </div>
+  `);
+  $('#btn-do-edit-main').on('click', function() {
+    const newVal = $('#f-main').val().trim();
+    if (!newVal || newVal === main) { closeModal(); return; }
+    $(this).text('儲存中...').prop('disabled', true);
+    const r1 = sheet1Data.filter(r => r.mainCategory === main);
+    const r2 = sheet2Data.filter(r => r.mainCategory === main);
+    const p1 = r1.map(r => callAPI({ action:'editSheet1Row', data: JSON.stringify({...r, mainCategory: newVal})}));
+    const p2 = r2.map(r => callAPI({ action:'editSheet2Row', data: JSON.stringify({...r, mainCategory: newVal})}));
+    $.when(...p1, ...p2).done(function() { closeModal(); showToast('修改成功'); reload(); });
+  });
+}
+
+function showDeleteMainModal(main) {
+  const rows = sheet1Data.filter(r => r.mainCategory === main);
+  openModal(`
+    <div class="modal-title">刪除主項目</div>
+    <div class="confirm-text">確定要刪除主項目「<b>${esc(main)}</b>」嗎？<br>此主項目下共有 ${rows.length} 筆次項目資料將一併刪除。</div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-confirm danger" id="btn-do-del-main">確認刪除</button>
+    </div>
+  `);
+  $('#btn-do-del-main').on('click', function() {
+    $(this).text('刪除中...').prop('disabled', true);
+    const sorted = [...rows].sort((a,b) => b.rowIndex - a.rowIndex);
+    let p = Promise.resolve();
+    sorted.forEach(r => { p = p.then(() => callAPI({ action:'deleteSheet1Row', rowIndex: r.rowIndex })); });
+    p.then(() => { closeModal(); showToast('刪除成功'); reload(); });
+  });
+}
+
+// ======== 次項目 CRUD ========
+function showAddSubModal(main) {
+  const existing = sheet1Data.filter(r => r.mainCategory === main);
+  const mainCode = main.split(' ')[0] || '00';
+  const letters = 'abcdefghijklmnopqrstuvwxyz';
+  const nextLetter = letters[existing.length] || '';
+
+  openModal(`
+    <div class="modal-title">新增次項目</div>
+    <div class="form-group">
+      <label class="form-label">次項目代號</label>
+      <input class="form-input" id="f-subcode" value="${esc(mainCode + nextLetter)}" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">次項目名</label>
+      <input class="form-input" id="f-subname" placeholder="例：流動資產" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">科目（顯示名稱）</label>
+      <input class="form-input" id="f-subject" placeholder="例：00a 流動資產" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">說明（選填）</label>
+      <input class="form-input" id="f-desc" placeholder="例：現金、銀行存款..." />
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-confirm" id="btn-do-add-sub">確認新增</button>
+    </div>
+  `);
+  $('#btn-do-add-sub').on('click', function() {
+    const subCode = $('#f-subcode').val().trim();
+    const subject = $('#f-subject').val().trim();
+    if (!subCode || !subject) return;
+    $(this).text('儲存中...').prop('disabled', true);
+    callAPI({ action:'addSheet1Row', data: JSON.stringify({
+      mainCategory: main, subOrder: nextLetter, subCode: subCode,
+      subName: $('#f-subname').val().trim(), subject: subject,
+      description: $('#f-desc').val().trim()
+    })}).done(function() { closeModal(); showToast('新增成功'); reload(); });
+  });
+}
+
+function showEditSubModal(sub) {
+  openModal(`
+    <div class="modal-title">編輯次項目</div>
+    <div class="form-group">
+      <label class="form-label">次項目代號</label>
+      <input class="form-input" id="f-subcode" value="${esc(sub.subCode)}" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">次項目名</label>
+      <input class="form-input" id="f-subname" value="${esc(sub.subName)}" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">科目（顯示名稱）</label>
+      <input class="form-input" id="f-subject" value="${esc(sub.subject)}" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">說明</label>
+      <input class="form-input" id="f-desc" value="${esc(sub.description)}" />
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-confirm" id="btn-do-edit-sub">確認修改</button>
+    </div>
+  `);
+  $('#btn-do-edit-sub').on('click', function() {
+    const newSubject = $('#f-subject').val().trim();
+    if (!newSubject) return;
+    $(this).text('儲存中...').prop('disabled', true);
+    const updated = {
+      rowIndex: sub.rowIndex, mainCategory: sub.mainCategory, subOrder: sub.subOrder,
+      subCode: $('#f-subcode').val().trim(), subName: $('#f-subname').val().trim(),
+      subject: newSubject, description: $('#f-desc').val().trim()
+    };
+    const promises = [callAPI({ action:'editSheet1Row', data: JSON.stringify(updated) })];
+    if (newSubject !== sub.subject) {
+      sheet2Data.filter(r => r.subject === sub.subject && r.mainCategory === sub.mainCategory)
+        .forEach(r => promises.push(callAPI({ action:'editSheet2Row', data: JSON.stringify({...r, subject: newSubject})})));
+    }
+    $.when(...promises).done(function() { closeModal(); showToast('修改成功'); reload(); });
+  });
+}
+
+function showDeleteSubModal(sub) {
+  const count = sheet2Data.filter(r => r.subject === sub.subject && r.mainCategory === sub.mainCategory).length;
+  openModal(`
+    <div class="modal-title">刪除次項目</div>
+    <div class="confirm-text">確定要刪除次項目「<b>${esc(sub.subject)}</b>」嗎？<br>此次項目下有 ${count} 筆記帳項資料。</div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-confirm danger" id="btn-do-del-sub">確認刪除</button>
+    </div>
+  `);
+  $('#btn-do-del-sub').on('click', function() {
+    $(this).text('刪除中...').prop('disabled', true);
+    callAPI({ action:'deleteSheet1Row', rowIndex: sub.rowIndex })
+      .done(function() { closeModal(); showToast('刪除成功'); reload(); });
+  });
+}
+
+// ======== 記帳項 CRUD ========
+function showAddLedgerModal(main, subject) {
+  openModal(`
+    <div class="modal-title">新增記帳項</div>
+    <div class="form-group">
+      <label class="form-label">主項目</label>
+      <input class="form-input" value="${esc(main)}" disabled />
+    </div>
+    <div class="form-group">
+      <label class="form-label">科目</label>
+      <input class="form-input" value="${esc(subject)}" disabled />
+    </div>
+    <div class="form-group">
+      <label class="form-label">項目名稱</label>
+      <input class="form-input" id="f-item" placeholder="例：零用金" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">金額</label>
+      <input class="form-input" id="f-amount" type="number" placeholder="正數或負數" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">日期</label>
+      <input class="form-input" id="f-date" type="date" value="${today()}" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">備註（選填）</label>
+      <input class="form-input" id="f-note" />
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-confirm" id="btn-do-add-ledger">確認新增</button>
+    </div>
+  `);
+  $('#btn-do-add-ledger').on('click', function() {
+    const item = $('#f-item').val().trim();
+    if (!item) return;
+    $(this).text('儲存中...').prop('disabled', true);
+    callAPI({ action:'addSheet2Row', data: JSON.stringify({
+      mainCategory: main, subject: subject, item: item,
+      amount: $('#f-amount').val().trim(), note: $('#f-note').val().trim(), date: $('#f-date').val()
+    })}).done(function() { closeModal(); showToast('新增成功'); reload(); });
+  });
+}
+
+function showEditLedgerModal(item) {
+  openModal(`
+    <div class="modal-title">編輯記帳項</div>
+    <div class="form-group">
+      <label class="form-label">主項目</label>
+      <input class="form-input" value="${esc(item.mainCategory)}" disabled />
+    </div>
+    <div class="form-group">
+      <label class="form-label">科目</label>
+      <input class="form-input" value="${esc(item.subject)}" disabled />
+    </div>
+    <div class="form-group">
+      <label class="form-label">項目名稱</label>
+      <input class="form-input" id="f-item" value="${esc(item.item)}" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">金額</label>
+      <input class="form-input" id="f-amount" type="number" value="${esc(item.amount)}" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">日期</label>
+      <input class="form-input" id="f-date" type="date" value="${esc(item.date)}" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">備註</label>
+      <input class="form-input" id="f-note" value="${esc(item.note)}" />
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-confirm" id="btn-do-edit-ledger">確認修改</button>
+    </div>
+  `);
+  $('#btn-do-edit-ledger').on('click', function() {
+    const itemName = $('#f-item').val().trim();
+    if (!itemName) return;
+    $(this).text('儲存中...').prop('disabled', true);
+    callAPI({ action:'editSheet2Row', data: JSON.stringify({
+      rowIndex: item.rowIndex, mainCategory: item.mainCategory, subject: item.subject,
+      item: itemName, amount: $('#f-amount').val().trim(),
+      note: $('#f-note').val().trim(), date: $('#f-date').val()
+    })}).done(function() { closeModal(); showToast('修改成功'); reload(); });
+  });
+}
+
+function showDeleteLedgerModal(rowIndex, itemName) {
+  openModal(`
+    <div class="modal-title">刪除記帳項</div>
+    <div class="confirm-text">確定要刪除「<b>${esc(itemName)}</b>」嗎？此動作無法復原。</div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-confirm danger" id="btn-do-del-ledger">確認刪除</button>
+    </div>
+  `);
+  $('#btn-do-del-ledger').on('click', function() {
+    $(this).text('刪除中...').prop('disabled', true);
+    callAPI({ action:'deleteSheet2Row', rowIndex: rowIndex })
+      .done(function() { closeModal(); showToast('刪除成功'); reload(); });
+  });
+}
+</script>
+</body>
+</html>
